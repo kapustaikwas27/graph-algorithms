@@ -95,7 +95,7 @@ NB. If parent does not exists then _1 occurs in parent row.
 bellmanford =: 4 : 0"0 1
 NB. x step y where x is reversed graph and y is current table of lengths of shortest paths and parents from source
 NB. calculates new table of lengths and parents (same shape as y) for paths that are 1 edge longer (dynamic programming).
-step =. {{ ((|: y)   |:@:relax   ({. minchoose 1&{ + ({. y) {~ {.)@>@]) x }}
+step =. {{ ((|: y)   |:@:relax   ({.   ([  minsel  ({&({. y)@[ + 1&{@]))   ])@>) x }}
 NB. Check if negative cycle. Iteration to get distances.
 ((] ;~ ] (*/@:<:)&{. step)   (step^:(<:@#@[) _1 ,:~ x&initdist))@:revdigraph y
 )
@@ -155,15 +155,13 @@ fillval =: 0 <@:$~ 0 ,~ <:@:{:@:$
 NB. Prepares [di]graph for visualization.
 graphstring =: {{ x ;@:(<@sprintf"(_&,@:<:@:#@:$ y)) y }}
 
-NB. Min with choosing.
-NB. Find index of min value in x and return pair 
-NB. (min from x , element from y from the same index as min of x or _1 if x is empty).
-minchoose =: <./@] , ((,&_1@[ {~ ]) (i. <./))
+NB. Min with selection.
+NB. Find index of min value in y and return pair 
+NB. (min from y , element from x from the same index as min of y or _1 if x is too short).
+minsel =: <./@] , ((,&_1@[ {~ ]) (i. <./))
 
 NB. Relax function in graph nomenclature.
-NB. Actually it is lexicographic min for rank 1 arrays.
-NB. Can it be done better?
-relax =: {.@:/:~"2@:,:"1
+relax =: [`]@.(>&({."1))
 
 NB. Ideas:
 
