@@ -1,4 +1,4 @@
-load '~temp/graph.ijs'
+load '~temp/graph-algorithms/graph.ijs'
 
 NB. Number of vertices in generated graphs.
 VN =: 1 5 10 20 50 100
