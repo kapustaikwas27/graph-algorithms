@@ -1,7 +1,7 @@
 NB. Example.
 NB. Run in Edit window (Jqt required for graphviz https://code.jsoftware.com/wiki/Addons/graphics/graphviz).
 
-load '~temp/graph-algorithms/tree.ijs'
+load '~temp/graph-algorithms/lib-tree.ijs'
 
 NB. Edges of a tree.
 ]e =: _2]\ 0 1  0 2  1 3  1 4  1 5  2 6  2 7  2 8  4 9  4 10  5 11  7 12  10 13

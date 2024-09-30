@@ -1,7 +1,7 @@
 NB. Example.
 NB. Run in Edit window (Jqt required for graphviz https://code.jsoftware.com/wiki/Addons/graphics/graphviz).
 
-load '~temp/graph-algorithms/graph.ijs'
+load '~temp/graph-algorithms/lib-graph.ijs'
 
 ]gvn =: 7 NB. Number of vertices is 7.
 ]ge =: _3]\ 1 2 6  1 4 7  2 3 5  2 4 8  2 5 _4  3 2 _2  4 3 _3  4 5 9  5 1 2  5 3 7 NB. List of edges with weights.
