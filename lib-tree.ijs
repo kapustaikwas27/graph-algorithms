@@ -1,25 +1,12 @@
 NB. Author: Marcin Żołek
 NB. Tree processing addon.
 
-0 : 0
-I came up with a non-recursive, linear, fast way to compute
-level, pre and post order for any rooted tree using J features
-without performing depth-first search.
-To make examples of usage more understandable I used graphviz addon,
-which is available in Jqt, to visualize example trees.
-
-Graphviz addon uses external program which may require
-additional (easy) installation described in JWiki.
-https://code.jsoftware.com/wiki/Addons/graphics/graphviz
-It is used only for visualization (verb show).
-
-I recommend using graphviz with J9.6.
-)
-
 load 'format/printf'
 load 'graphics/graphviz'
 
 cocurrent 'tree'
+
+NB. Public:
 
 NB. Enum to access elements from tree representation using names instead of numbers
 NB. for example LVLS&{:: instead of 2&{::
@@ -92,9 +79,39 @@ NB. There are a few optimizations in the code and details are omitted.
 preIdxs =. ; _1 1 1 <@:{.F:.(>@[  (prepare@:{.@[ ,~ (1&{ # {.)@] >:@:+ (] (0 0&,)@:(+/\)@:}:@:(0:`((*@:(1&{) <:@:# {:)@[)`]}) {:@[) (}.@[ - {~) (1&{ # 0&,@:}:@:{:)@])  ]) both
 postIdxs =. ; (1 1 ,~ # children) <@:{.F:.(>@[  (prepare@:{.@[ ,~ (1&{ # {.)@] <:@:- (] (,&0 0)@:(+/\.)@:}.@:(0:`((*@:(1&{) }:@:# {:)@[)`]}) {:@[) (}:@[ - {~) (1&{ # {:)@])  ]) both
 NB. Convert preIdxs and postIdxs to preorder and postorder.
-put =. ]`[`(0 $~ #@])}
 lvlOrd =. ; lvls
 preOrd =. preIdxs put lvlOrd
 postOrd =. postIdxs put lvlOrd
 lvlOrd , preOrd ,: postOrd
+)
+
+NB. Conjuction to create a verb performing bottom-up tree analysis where
+NB. u is dyad where x is non-leaf's id, y is array of results of its children.
+NB. v is monad where y is leaf's id.
+NB. It is called single, so it does not collect the intermediate results just like F.. or F.:
+BottomUpSingle =: 2 : 0
+neighbors =. NEIGHBORS_tree_&{:: y
+((0 $ 0) ]F.:(>@[ (u MapLvl_tree_ v) ]) (,: #@:{.@>@:({&neighbors))&.>)@:(LVLS_tree_&{::) y
+)
+
+NB. It is called multiple, so it collects the intermediate results just like F:. or F::
+NB. The rest is the same as in BottomUpSingle.
+BottomUpMultiple =: 2 : 0
+neighbors =. NEIGHBORS_tree_&{:: y
+(; put_tree_ >@:(,&.>/)@:|.@:((0 $ 0) <F::(>@[ (u MapLvl_tree_ v) ]) (,: #@:{.@>@:({&neighbors))&.>))@:(LVLS_tree_&{::) y
+)
+
+NB. Private:
+
+put =: ]`[`]}
+
+MapLvl =: 2 : 0
+'lvl children' =. x
+isIn =. * children
+isOut =. -. isIn
+resIn =. (isIn # lvl) (u >)"0 ((1:)`(<:@])`(0 $~ {:@])}~@:(+/\)@:(-.&0) children) <;.2 y
+resOut =. v"0 isOut # lvl
+idxs =. (I. isIn) , I. isOut
+res =. resIn , resOut
+res idxs} res
 )

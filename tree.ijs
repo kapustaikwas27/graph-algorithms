@@ -21,6 +21,8 @@ load 'graphics/graphviz'
 
 cocurrent 'tree'
 
+NB. Public:
+
 NB. Enum to access elements from tree representation using names instead of numbers
 NB. for example LVLS&{:: instead of 2&{::
 NB. Tree representation is described in treeFromEdges.
@@ -92,12 +94,43 @@ NB. There are a few optimizations in the code and details are omitted.
 preIdxs =. ; _1 1 1 <@:{.F:.(>@[  (prepare@:{.@[ ,~ (1&{ # {.)@] >:@:+ (] (0 0&,)@:(+/\)@:}:@:(0:`((*@:(1&{) <:@:# {:)@[)`]}) {:@[) (}.@[ - {~) (1&{ # 0&,@:}:@:{:)@])  ]) both
 postIdxs =. ; (1 1 ,~ # children) <@:{.F:.(>@[  (prepare@:{.@[ ,~ (1&{ # {.)@] <:@:- (] (,&0 0)@:(+/\.)@:}.@:(0:`((*@:(1&{) }:@:# {:)@[)`]}) {:@[) (}:@[ - {~) (1&{ # {:)@])  ]) both
 NB. Convert preIdxs and postIdxs to preorder and postorder.
-put =. ]`[`(0 $~ #@])}
 lvlOrd =. ; lvls
 preOrd =. preIdxs put lvlOrd
 postOrd =. postIdxs put lvlOrd
 lvlOrd , preOrd ,: postOrd
 )
+
+NB. Conjuction to create a verb performing bottom-up tree analysis where
+NB. u is dyad where x is non-leaf's id, y is array of results of its children.
+NB. v is monad where y is leaf's id.
+NB. It is called single, so it does not collect the intermediate results just like F.. or F.:
+BottomUpSingle =: 2 : 0
+neighbors =. NEIGHBORS_tree_&{:: y
+((0 $ 0) ]F.:(>@[ (u MapLvl_tree_ v) ]) (,: #@:{.@>@:({&neighbors))&.>)@:(LVLS_tree_&{::) y
+)
+
+NB. It is called multiple, so it collects the intermediate results just like F:. or F::
+NB. The rest is the same as in BottomUpSingle.
+BottomUpMultiple =: 2 : 0
+neighbors =. NEIGHBORS_tree_&{:: y
+(; put_tree_ >@:(,&.>/)@:|.@:((0 $ 0) <F::(>@[ (u MapLvl_tree_ v) ]) (,: #@:{.@>@:({&neighbors))&.>))@:(LVLS_tree_&{::) y
+)
+
+NB. Private:
+
+put =: ]`[`]}
+
+MapLvl =: 2 : 0
+'lvl children' =. x
+isIn =. * children
+isOut =. -. isIn
+resIn =. (isIn # lvl) (u >)"0 ((1:)`(<:@])`(0 $~ {:@])}~@:(+/\)@:(-.&0) children) <;.2 y
+resOut =. v"0 isOut # lvl
+idxs =. (I. isIn) , I. isOut
+res =. resIn , resOut
+res idxs} res
+)
+
 
 NB. Example of usage.
 cocurrent 'base'
@@ -121,7 +154,22 @@ order_tree_ t
 NB. Weights of edges does not change any order.
 (order_tree_ t) -: order_tree_ tw
 
+NB. Get sum of ids in each subtree.
+NB. More precisely it returns numeric array where on index i there is sum of ids from subtree rooted in vertex i.
+NB. It is probably useless problem, but simple example.
+(+ +/) BottomUpMultiple_tree_ ] t
+
+NB. The next problem is about printing rooted tree in a boxed form. The problem is taken from
+NB. https://asherbhs.github.io/apl-site/trees/bottom-up-aggregation.html
+]e =: _2]\ 0 1  1 2  2 3  2 4  1 5  0 6  6 7  7 8  7 9  7 10  0 11
+]t =: treeFromEdges_tree_ e
+NB. Convert integer (vertex) to letter. 0 to 'a', 1 to 'b', ...
+convert =: {&a.@:((a. i. 'a')&+)
+> ((<@:convert@[ <@:, ,/@]) BottomUpSingle_tree_ (<^:2@:convert)) t
+((<@:convert@[ <@:, ,/@]) BottomUpMultiple_tree_ (<^:2@:convert)) t
+
 NB. Measure performance.
+timeSpace =: 6!:2 , 7!:2@]
 
 NB. Generate edges of complete (or almost complete without full last level of leaves depending on given number of vertices)
 NB. regular tree (regular means that each vertex except leaves has the same number of children).
@@ -137,7 +185,12 @@ NB. Create 3-regular, almost complete tree with million vertices.
 e =: 3 genRegEdges 1e6
 t =: treeFromEdges_tree_ e
 NB. Execute order_tree_ 5 times and get average execution time and get allocated space.
-timeSpace =: 6!:2 , 7!:2@]
 5 timeSpace 'order_tree_ t'
 NB. Compare it with your recursive implementation in J or your second favorite language :-).
 NB. Note that above timing does not include time spent for generating tree representation from table of edges.
+
+NB. Performance of above examples of bottom-up tree analysis.
+timeSpace '(+ +/) BottomUpMultiple_tree_ ] t'
+NB. Verb convert is omitted, because alphabet is too short.
+timeSpace '> ((<@[ <@:, ,/@]) BottomUpSingle_tree_ (<^:2)) t'
+timeSpace '(<@[ <@:, ,/@]) BottomUpMultiple_tree_ (<^:2) t'
